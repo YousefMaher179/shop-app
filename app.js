@@ -17,6 +17,7 @@ const multer = require("multer");
 const helmet = require("helmet");
 const compression = require("compression");
 const morgan = require("morgan");
+const rfs = require("rotating-file-stream");
 
 const errorController = require("./controllers/error");
 const User = require("./models/user");
@@ -58,14 +59,18 @@ const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
 const authRoutes = require("./routes/auth");
 
-const accessLogStream = fs.createReadStream(
-  path.join(__dirname, "access.log"),
-  { flags: "a" }
-);
-
 app.use(helmet());
 app.use(compression());
-app.use(morgan("combined", { stream: accessLogStream.write }));
+const accessLogStream = rfs.createStream("access.log", {
+  size: "10M", // rotate every 10 MegaBytes written
+  interval: "1d", // rotates daily
+  path: path.join(__dirname, "logs"),
+  compress: "gzip", // compress rotated files
+});
+app.use(morgan({ stream: accessLogStream }));
+if (app.get("env") !== "production") {
+  app.use(morgan("dev")); //log to console on development
+}
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(
