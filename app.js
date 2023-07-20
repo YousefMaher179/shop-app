@@ -2,6 +2,10 @@ const path = require("path");
 const fs = require("fs");
 const https = require("https");
 
+const dotenv = require("dotenv");
+
+dotenv.config();
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
@@ -17,18 +21,16 @@ const morgan = require("morgan");
 const errorController = require("./controllers/error");
 const User = require("./models/user");
 
-const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.jv0grvp.mongodb.net/${process.env.MONGO_DEFAULT_DATABASE}`;
-
 const app = express();
 
 const store = new MongoDBStore({
-  uri: MONGODB_URI,
+  uri: process.env.MONGO_URI,
   collection: "sessions",
 });
 const csrfProtection = csrf();
 
-const privatKey = fs.readFileSync("server.key");
-const certificate = fs.readFileSync("server.cert");
+const privatKey = fs.readFileSync("Key.pem");
+const certificate = fs.readFileSync("csr.pem");
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -65,7 +67,7 @@ const accessLogStream = fs.createReadStream(
 
 app.use(helmet());
 app.use(compression());
-app.use(morgan("combined", { stream: accessLogStream }));
+app.use(morgan("combined", { stream: accessLogStream.write }));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(
@@ -127,7 +129,7 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-  .connect(MONGODB_URI)
+  .connect(process.env.MONGO_URI)
   .then((result) => {
     // https
     //   .createServer({ key: privatKey, cert: certificate }, app)
@@ -136,3 +138,4 @@ mongoose
   .catch((err) => {
     console.log(err);
   });
+
