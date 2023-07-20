@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nohup node app.js </dev/null",
+    "start": "node app.js ",
     "start-server": "nodemon app.js",
     "start:dev": "nodemon app.js"
   },
